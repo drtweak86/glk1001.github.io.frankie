@@ -21,13 +21,11 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 
-from utils import ADDON_DATA_PATH, log_msg
+from utils import ADDON_DATA_PATH, ADDON_WINDOW_ID, KODI_PROPERTY_SPOTIFY_CONNECT_AUTH_PAUSED, log_msg
 from . import bootstrap, session, session_kodi
 from . import utils as connect_utils
 
 _LOCK_FILE = os.path.join(ADDON_DATA_PATH, "connect.lock")
-_AUTH_PAUSE_PROPERTY = "spotify-connect-auth-active"
-_AUTH_PAUSE_WINDOW_ID = 10000
 _AUTH_PAUSE_STALE_SECS = 300
 _TICK_SECS = 2
 _STANDALONE_ADDON_ID = "service.librespot"
@@ -63,7 +61,8 @@ def _standalone_addon_present():
 
 
 def _auth_paused():
-    value = xbmcgui.Window(_AUTH_PAUSE_WINDOW_ID).getProperty(_AUTH_PAUSE_PROPERTY)
+    window = xbmcgui.Window(ADDON_WINDOW_ID)
+    value = window.getProperty(KODI_PROPERTY_SPOTIFY_CONNECT_AUTH_PAUSED)
     if not value:
         return False
     try:
@@ -73,7 +72,7 @@ def _auth_paused():
     if time.time() - started > _AUTH_PAUSE_STALE_SECS:
         # The plugin process died mid-auth without clearing the property.
         log_msg("connect: auth-pause property is stale; clearing it.")
-        xbmcgui.Window(_AUTH_PAUSE_WINDOW_ID).clearProperty(_AUTH_PAUSE_PROPERTY)
+        window.clearProperty(KODI_PROPERTY_SPOTIFY_CONNECT_AUTH_PAUSED)
         return False
     return True
 

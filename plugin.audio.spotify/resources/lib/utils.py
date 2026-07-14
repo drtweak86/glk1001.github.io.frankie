@@ -24,6 +24,11 @@ ADDON_WINDOW_ID = 10000
 KODI_PROPERTY_SPOTIFY_AUTH_TOKEN = "spotify-auth-token"
 KODI_PROPERTY_AUTH_TOKEN_EXPIRES_AT = "spotify-auth-token-expires-at"
 
+# Set while the plugin's own spotty zeroconf auth flow ("Kodi-Spotty") is
+# active, so the Spotify Connect service (a separate process) can pause
+# librespot and avoid two Connect devices being announced at once.
+KODI_PROPERTY_SPOTIFY_CONNECT_AUTH_PAUSED = "spotify-connect-auth-active"
+
 
 def log_msg(msg: str, loglevel: int = LOGDEBUG, caller_name: str = "") -> None:
     if DEBUG and (loglevel == LOGDEBUG):
@@ -123,6 +128,14 @@ def cache_auth_token_expires_at(auth_token: str) -> None:
 
 def get_cached_auth_token_expires_at() -> str:
     return get_cached_value_from_kodi(KODI_PROPERTY_AUTH_TOKEN_EXPIRES_AT)
+
+
+def set_spotify_connect_auth_paused(paused: bool) -> None:
+    win = xbmcgui.Window(ADDON_WINDOW_ID)
+    if paused:
+        win.setProperty(KODI_PROPERTY_SPOTIFY_CONNECT_AUTH_PAUSED, str(int(time.time())))
+    else:
+        win.clearProperty(KODI_PROPERTY_SPOTIFY_CONNECT_AUTH_PAUSED)
 
 
 def cache_value_in_kodi(kodi_property_id: str, value: Any):

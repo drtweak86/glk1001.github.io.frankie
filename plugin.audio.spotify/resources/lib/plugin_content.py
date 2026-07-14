@@ -144,29 +144,36 @@ class PluginContent:
         dialog = xbmcgui.Dialog()
         dialog_title = self.__addon.getAddonInfo("name")
 
-        spotty_auth = SpottyAuth(self.__spotty)
+        # Tell the (separate) service process to pause Spotify Connect for
+        # the duration of this flow, so spotty's "Kodi-Spotty" zeroconf
+        # device isn't announced alongside a Connect device at the same time.
+        utils.set_spotify_connect_auth_paused(True)
+        try:
+            spotty_auth = SpottyAuth(self.__spotty)
 
-        zeroconf_auth = spotty_auth.start_zeroconf_authenticate()
-        if zeroconf_auth is None:
-            dialog.ok(dialog_title, self.get_zeroconf_program_failed_msg(spotty_auth))
-            main_service.abort_main_service = True
-            utils.kill_this_plugin()
-            return
+            zeroconf_auth = spotty_auth.start_zeroconf_authenticate()
+            if zeroconf_auth is None:
+                dialog.ok(dialog_title, self.get_zeroconf_program_failed_msg(spotty_auth))
+                main_service.abort_main_service = True
+                utils.kill_this_plugin()
+                return
 
-        dialog.ok(dialog_title, instructions)
+            dialog.ok(dialog_title, instructions)
 
-        zeroconf_auth.terminate()
+            zeroconf_auth.terminate()
 
-        if not spotty_auth.zeroconf_authenticated_ok():
-            dialog.ok(dialog_title, self.get_zeroconf_authentication_failed_msg(spotty_auth))
-            main_service.abort_main_service = True
-            utils.kill_this_plugin()
-            return
+            if not spotty_auth.zeroconf_authenticated_ok():
+                dialog.ok(dialog_title, self.get_zeroconf_authentication_failed_msg(spotty_auth))
+                main_service.abort_main_service = True
+                utils.kill_this_plugin()
+                return
 
-        spotty_auth.renew_token()
-        self.refresh_spotipy()
+            spotty_auth.renew_token()
+            self.refresh_spotipy()
 
-        dialog.ok(dialog_title, self.get_authenticated_success_msg())
+            dialog.ok(dialog_title, self.get_authenticated_success_msg())
+        finally:
+            utils.set_spotify_connect_auth_paused(False)
 
     def get_authenticated_success_msg(self) -> str:
         msg = self.__addon.getLocalizedString(AUTHENTICATE_SUCCESS_STR_ID)
