@@ -14,6 +14,7 @@ import xbmcgui
 import bottle_manager
 import spotty
 import utils
+from connect.manager import ConnectManager
 from http_spotty_audio_streamer import HTTPSpottyAudioStreamer
 from http_video_player_setter import HttpVideoPlayerSetter
 from save_recently_played import SaveRecentlyPlayed
@@ -26,8 +27,20 @@ SAVE_TO_RECENTLY_PLAYED_FILE = True
 SPOTIFY_ADDON = xbmcaddon.Addon(id=ADDON_ID)
 
 
-def abort_app(timeout_in_secs: int) -> bool:
-    return xbmc.Monitor().waitForAbort(timeout_in_secs)
+class ServiceMonitor(xbmc.Monitor):
+    """A single, persistent Monitor instance for the whole service.
+
+    Needed (rather than a fresh xbmc.Monitor() per loop iteration) so that
+    onSettingsChanged is reliably delivered to the Spotify Connect manager.
+    """
+
+    def __init__(self, connect_manager: ConnectManager):
+        super().__init__()
+        self.__connect_manager = connect_manager
+
+    def onSettingsChanged(self) -> None:
+        if self.__connect_manager is not None:
+            self.__connect_manager.on_settings_changed()
 
 
 def add_http_video_rule() -> None:
@@ -51,6 +64,15 @@ class MainService:
 
         self.__spotty_auth: SpottyAuth = SpottyAuth(self.__spotty)
         self.__auth_token_expires_at = ""
+
+        try:
+            self.__connect_manager = ConnectManager()
+        except Exception as exc:
+            # A Spotify Connect bug must never take down browse/play.
+            log_exception(exc, "Could not construct the Spotify Connect manager")
+            self.__connect_manager = None
+
+        self.__monitor = ServiceMonitor(self.__connect_manager)
 
         # Workaround to make Kodi use it's VideoPlayer to play http audio streams.
         # If we don't do this, then Kodi uses PAPlayer which does not stream.
@@ -84,6 +106,9 @@ class MainService:
         bottle_manager.start_thread(PROXY_PORT)
         log_msg(f"Started bottle with port {PROXY_PORT}.")
 
+        if self.__connect_manager is not None:
+            self.__connect_manager.start()
+
         self.__renew_token()
 
         loop_counter = 0
@@ -113,7 +138,7 @@ class MainService:
                 log_msg("Refreshing auth token now.")
                 self.__renew_token()
 
-            if abort_app(loop_wait_in_secs):
+            if self.__monitor.waitForAbort(loop_wait_in_secs):
                 log_msg("Aborting the main service.")
                 break
 
@@ -121,6 +146,10 @@ class MainService:
 
     def __close(self) -> None:
         log_msg("Shutdown requested.")
+        if self.__connect_manager is not None:
+            # Stop Spotify Connect first: it may still need to talk to the
+            # Kodi player, so do it while the rest of the service is up.
+            self.__connect_manager.stop()
         self.__http_spotty_streamer.stop()
         self.__spotty_helper.kill_all_spotties()
         bottle_manager.stop_thread()
