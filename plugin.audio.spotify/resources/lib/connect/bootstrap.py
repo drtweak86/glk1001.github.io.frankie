@@ -12,6 +12,11 @@ import xbmcaddon
 import xbmcgui
 import xbmcvfs
 
+from string_ids import (
+    SPOTIFY_CONNECT_CATEGORY_STR_ID,
+    SPOTIFY_CONNECT_CONFIRM_INSTALL_STR_ID,
+    SPOTIFY_CONNECT_INSTALL_FAILED_STR_ID,
+)
 from utils import ADDON_ID, log_msg
 from . import utils as connect_utils
 
@@ -23,15 +28,17 @@ SYSTEM_PYTHON = "/usr/bin/python3"
 # Shared with the standalone service.librespot addon (see install-root.sh).
 MARKER = "/var/lib/frankie-librespot/installed-0.8.0-alsa-r2"
 
-DIALOG_HEADING = "Spotify Connect"
 
-CONFIRM_INSTALL_MSG = (
-    "Set up Spotify Connect?\n"
-    "First-time setup uses sudo to install ffmpeg and the librespot binary "
-    "(quick download; falls back to compiling on this machine, which can take "
-    "20-40 minutes on a Pi). Choosing No disables Spotify Connect in the "
-    "addon settings."
-)
+def _dialog_heading() -> str:
+    return xbmcaddon.Addon(id=ADDON_ID).getLocalizedString(SPOTIFY_CONNECT_CATEGORY_STR_ID)
+
+
+def _confirm_install_msg() -> str:
+    return xbmcaddon.Addon(id=ADDON_ID).getLocalizedString(SPOTIFY_CONNECT_CONFIRM_INSTALL_STR_ID)
+
+
+def _install_failed_heading() -> str:
+    return xbmcaddon.Addon(id=ADDON_ID).getLocalizedString(SPOTIFY_CONNECT_INSTALL_FAILED_STR_ID)
 
 
 def ready() -> bool:
@@ -53,7 +60,7 @@ def disable_connect_setting() -> None:
 
 def confirm_and_install() -> bool:
     """Asks for consent, then runs the sudo installer. Returns readiness."""
-    if not xbmcgui.Dialog().yesno(DIALOG_HEADING, CONFIRM_INSTALL_MSG):
+    if not xbmcgui.Dialog().yesno(_dialog_heading(), _confirm_install_msg()):
         log_msg("User declined the Spotify Connect installation; disabling the setting.")
         disable_connect_setting()
         connect_utils.notification("Spotify Connect disabled (can be re-enabled in settings)")
@@ -63,7 +70,7 @@ def confirm_and_install() -> bool:
 
 def _install() -> bool:
     progress = xbmcgui.DialogProgressBG()
-    progress.create(DIALOG_HEADING, "Preparing one-shot installation…")
+    progress.create(_dialog_heading(), "Preparing one-shot installation…")
 
     command = ["sudo", "-n", "/bin/bash", INSTALLER, ADDON_PATH]
     connect_utils.log("Running installer: {}".format(" ".join(command)))
@@ -80,7 +87,7 @@ def _install() -> bool:
         progress.close()
         disable_connect_setting()
         xbmcgui.Dialog().ok(
-            DIALOG_HEADING, "Could not start the installer:\n{}".format(exc)
+            _dialog_heading(), "Could not start the installer:\n{}".format(exc)
         )
         return False
 
@@ -124,7 +131,7 @@ def _install() -> bool:
                 "Spotify Connect has been disabled in the addon settings; "
                 "re-enable it to retry.".format(returncode)
             )
-        xbmcgui.Dialog().ok("Spotify Connect installation failed", detail)
+        xbmcgui.Dialog().ok(_install_failed_heading(), detail)
         return False
 
     if ready():
@@ -133,7 +140,7 @@ def _install() -> bool:
 
     disable_connect_setting()
     xbmcgui.Dialog().ok(
-        DIALOG_HEADING,
+        _dialog_heading(),
         "Installation completed, but the librespot binary is missing. "
         "See /tmp/frankie-librespot-install.log. Spotify Connect has been "
         "disabled in the addon settings; re-enable it to retry.",

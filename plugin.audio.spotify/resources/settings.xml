@@ -21,4 +21,26 @@
         <setting id="songDefaultView" type="text" default="" label="11034"/>
         <setting id="appendArtistToTitle" type="bool" default="false" label="11030"/>
     </category>
+
+    <category label="11087">
+        <setting id="connect_enabled" type="bool" default="true" label="11088"
+                 visible="System.Platform.Linux + !System.Platform.Android">
+          <control type="toggle"/>
+        </setting>
+        <setting id="connect_name" type="text" default="" label="11089"
+                 help="Blank = this machine's hostname"/>
+        <setting id="connect_backend" type="select" values="kodi|alsa" default="kodi" label="11090"/>
+        <setting id="connect_player" type="select" values="default|basic" default="default"
+                 label="11091" visible="eq(-1,kodi)"/>
+        <setting id="connect_alsa_device" type="text" default="default" label="11092"
+                 visible="eq(-2,alsa)"/>
+        <setting id="connect_dnd_kodi" type="bool" default="false" label="11093">
+          <control type="toggle"/>
+        </setting>
+        <setting id="connect_zeroconf_fixed" type="bool" default="false" label="11094">
+          <control type="toggle"/>
+        </setting>
+        <setting id="connect_zeroconf_port" type="number" default="50252" label="11095"
+                 visible="eq(-1,true)"/>
+    </category>
 </settings>

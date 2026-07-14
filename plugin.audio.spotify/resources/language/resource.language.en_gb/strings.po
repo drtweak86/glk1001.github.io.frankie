@@ -211,3 +211,52 @@ msgstr ""
 msgctxt "#11086"
 msgid "Set to 'True', if there is a problem with early stream termination"
 msgstr ""
+
+msgctxt "#11087"
+msgid "Spotify Connect"
+msgstr ""
+
+msgctxt "#11088"
+msgid "Enable Spotify Connect (play to this device from the Spotify app)"
+msgstr ""
+
+msgctxt "#11089"
+msgid "Spotify Connect device name (blank = this machine's hostname)"
+msgstr ""
+
+msgctxt "#11090"
+msgid "Output ('kodi' plays inside Kodi's player; 'alsa' plays directly to the sound card)"
+msgstr ""
+
+msgctxt "#11091"
+msgid "Kodi player mode"
+msgstr ""
+
+msgctxt "#11092"
+msgid "ALSA device"
+msgstr ""
+
+msgctxt "#11093"
+msgid "Do not disturb Kodi (pause Spotify Connect while Kodi is playing something else)"
+msgstr ""
+
+msgctxt "#11094"
+msgid "Use a fixed Zeroconf port"
+msgstr ""
+
+msgctxt "#11095"
+msgid "Fixed Zeroconf port"
+msgstr ""
+
+msgctxt "#11096"
+msgid ""
+"Set up Spotify Connect?\n"
+"First-time setup uses sudo to install ffmpeg and the librespot binary "
+"(quick download; falls back to compiling on this machine, which can take "
+"20-40 minutes on a Pi). Choosing No disables Spotify Connect in the addon "
+"settings."
+msgstr ""
+
+msgctxt "#11097"
+msgid "Spotify Connect installation failed."
+msgstr ""
